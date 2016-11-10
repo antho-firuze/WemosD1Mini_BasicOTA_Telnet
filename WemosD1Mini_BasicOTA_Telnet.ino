@@ -3,21 +3,40 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
+/*-------- shortcuts code ----------*/
+boolean doSerial=true;      
+#define sb    Serial.begin(9600)        // shortcuts for serial output
+#define sp    Serial.print
+#define spf   Serial.printf
+#define spln  Serial.println
+
+/*-------- Telnet code ----------*/
 // start telnet server (do NOT put in setup())
 const uint16_t aport = 23; // standard port
 WiFiServer TelnetServer(aport);
 WiFiClient TelnetClient;
 
-const char* ssid = "My Azuz7";
+void tp(String output) {
+  if (!TelnetClient)  // otherwise it works only once
+        TelnetClient = TelnetServer.available();
+  if (TelnetClient.connected()) {
+    TelnetClient.println(output);
+  }  
+}
+
+// Hotspot SSID and password
+const char* ssid = "My Azuz";
 const char* password = "azzahra4579";
 
 void setup() {
-  Serial.begin(9600);
+  sb;
 
   TelnetServer.begin();
   TelnetServer.setNoDelay(true);
  
-  Serial.println("Booting");
+  spln();
+  spln();
+  spln("Booting");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -25,6 +44,8 @@ void setup() {
     delay(5000);
     ESP.restart();
   }
+  spln("Ready");
+  sp("IP address: "); spln(WiFi.localIP());
 
   // Port defaults to 8266
   // ArduinoOTA.setPort(8266);
@@ -53,29 +74,15 @@ void setup() {
     else if (error == OTA_END_ERROR) Serial.println("End Failed");
   });
   ArduinoOTA.begin();
-  Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop() {
   ArduinoOTA.handle();
   
-  Debug("LED OFF");
+  tp("LED OFF");
   digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
   delay(5000);                       // wait for a second
-  Debug("LED ON");
+  tp("LED ON");
   digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
   delay(5000);                       // wait for a second
 }
-
-void Debug(String output) {
-  if (!TelnetClient)  // otherwise it works only once
-        TelnetClient = TelnetServer.available();
-  if (TelnetClient.connected()) {
-    TelnetClient.println(output);
-  }  
-}
-
